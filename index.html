@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Control Farmacia v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #2d7c4e 0%, #1a5c37 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #2d7c4e 0%, #1a5c37 100%); color: white; padding: 20px 30px; text-align: center; }
+        .header h1 { font-size: 2em; margin-bottom: 10px; }
+        .tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid #dee2e6; padding: 0 30px; flex-wrap: wrap; }
+        .tab { padding: 15px 20px; cursor: pointer; border: none; background: none; font-size: 0.95em; font-weight: 600; color: #6c757d; transition: all 0.3s; border-bottom: 3px solid transparent; }
+        .tab:hover { color: #2d7c4e; background: rgba(45, 124, 78, 0.1); }
+        .tab.active { color: #2d7c4e; border-bottom-color: #2d7c4e; }
+        .content { padding: 30px; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .card { background: white; border: 1px solid #dee2e6; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card h3 { color: #2d7c4e; margin-bottom: 15px; font-size: 1.3em; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; color: #495057; }
+        input, select, textarea { width: 100%; padding: 10px; border: 2px solid #dee2e6; border-radius: 5px; font-size: 1em; transition: border-color 0.3s; text-transform: uppercase; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #2d7c4e; }
+        .btn { padding: 12px 30px; border: none; border-radius: 5px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s; margin-right: 10px; margin-bottom: 10px; }
+        .btn-primary { background: #2d7c4e; color: white; }
+        .btn-primary:hover { background: #1a5c37; transform: translateY(-2px); }
+        .btn-success { background: #28a745; color: white; }
+        .btn-success:hover { background: #218838; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-info:hover { background: #138496; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; font-size: 0.9em; }
+        th { background: #f8f9fa; font-weight: 600; color: #495057; }
+        tr:hover { background: #f8f9fa; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: linear-gradient(135deg, #2d7c4e 0%, #1a5c37 100%); color: white; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(45, 124, 78, 0.3); }
+        .stat-card h4 { font-size: 0.9em; opacity: 0.9; margin-bottom: 10px; }
+        .stat-card .value { font-size: 2.5em; font-weight: bold; }
+        .alert { padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .search-box { position: relative; margin-bottom: 20px; }
+        .search-box input { padding-left: 40px; }
+        .search-icon { position: absolute; left: 12px; top: 12px; color: #6c757d; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #2d7c4e 0%, #1a5c37 100%); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); max-width: 400px; width: 90%; }
+        .login-logo { text-align: center; margin-bottom: 30px; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 30px; width: 80%; max-width: 600px; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .close { font-size: 28px; font-weight: bold; cursor: pointer; color: #999; }
+        .close:hover { color: #333; }
+        .inactive { opacity: 0.5; background: #f8f9fa !important; }
+        .admin-panel { display: none; }
+        .error-list { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 10px 0; max-height: 300px; overflow-y: auto; }
+        .error-item { padding: 8px; margin: 5px 0; background: white; border-left: 4px solid #dc3545; }
+        .footer-credits { position: fixed; bottom: 10px; left: 10px; background: rgba(255,255,255,0.95); padding: 10px 15px; border-radius: 8px; font-size: 0.85em; color: #495057; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 9998; line-height: 1.6; }
+        .footer-credits a { color: #2d7c4e; text-decoration: none; font-weight: 600; }
+        .footer-credits a:hover { text-decoration: underline; }
+        @media print { .footer-credits { display: none; } }
+    </style>
+</head>
+<body>
+    <!-- Pantalla de Login -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-box">
+            <div class="login-logo">
+                <h2 style="color: #2d7c4e; margin-bottom: 5px;">Sistema de Control de Farmacia</h2>
+                <p style="color: #666; font-size: 0.9em;">Versión 2.0</p>
+            </div>
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="loginUser" placeholder="INGRESE SU USUARIO" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="loginPass" placeholder="INGRESE SU CONTRASEÑA">
+            </div>
+            <button class="btn btn-primary" onclick="iniciarSesion()" style="width: 100%;">🔐 Iniciar Sesión</button>
+            <div id="loginError" style="margin-top: 15px;"></div>
+        </div>
+        
+        <div class="footer-credits">
+            <strong>Realizado por:</strong> Lucio Rosas Bravo<br>
+            <strong>By Claude</strong><br>
+            <strong>Info:</strong> <a href="mailto:rbravo39@gmail.com">rbravo39@gmail.com</a>
+        </div>
+    </div>
+
+    <!-- Sistema Principal -->
+    <div class="container" id="mainSystem" style="display: none;">
+        <div class="header">
+            <h1>Sistema de Control de Farmacia</h1>
+            <p>Gestión de Medicamentos y Entregas v2.0</p>
+            <p style="font-size: 0.9em; margin-top: 5px;">Usuario: <span id="usuarioActual"></span> | <a href="#" onclick="return cerrarSesion()" style="color: white; text-decoration: underline;">Cerrar Sesión</a></p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="cambiarTab(event, 'captura')">📝 Captura</button>
+            <button class="tab" onclick="cambiarTab(event, 'bd')">💊 Medicamentos</button>
+            <button class="tab" onclick="cambiarTab(event, 'reportes')">📊 Reportes</button>
+            <button class="tab admin-panel" onclick="cambiarTab(event, 'usuarios')">👥 Usuarios</button>
+        </div>
+        
+        <div class="content">
+            <!-- CAPTURA -->
+            <div id="captura" class="tab-content active">
+                <div class="card">
+                    <h3>Registrar Entrega de Medicamento</h3>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Código de Barras</label>
+                            <input type="text" id="codigo" placeholder="ESCANEE O INGRESE EL CÓDIGO" autofocus>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Entrega</label>
+                            <input type="date" id="fecha">
+                        </div>
+                    </div>
+                    <button class="btn btn-info" onclick="buscarMedicamentoModal()">🔍 Buscar Medicamento</button>
+                    
+                    <div id="medInfo" style="display:none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border-left: 4px solid #2d7c4e;">
+                        <h4 style="color: #2d7c4e; margin-bottom: 10px;">Información del Medicamento:</h4>
+                        <p><strong>Clave:</strong> <span id="infoClave"></span></p>
+                        <p><strong>Descripción:</strong> <span id="infoDesc"></span></p>
+                        <p><strong>Presentación:</strong> <span id="infoPres"></span></p>
+                        <p><strong>Gramaje:</strong> <span id="infoGram"></span></p>
+                        <p><strong>Lote:</strong> <span id="infoLote"></span></p>
+                        <p><strong>Caducidad:</strong> <span id="infoCad"></span></p>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="registrarEntrega()">✓ Registrar Entrega</button>
+                        <button class="btn btn-danger" onclick="registrarNoSurtido()">✗ Registrar NO Surtido</button>
+                        <button class="btn btn-info" onclick="limpiarFormulario()">🔄 Limpiar</button>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>Entregas del Día - <span id="fechaHoy"></span></h3>
+                    <div id="entregasRecientes"></div>
+                </div>
+            </div>
+            
+            <!-- MEDICAMENTOS -->
+            <div id="bd" class="tab-content">
+                <div class="card">
+                    <h3>Importar Lista de Medicamentos desde Excel</h3>
+                    <div class="alert alert-success" style="margin-bottom: 15px; font-size: 0.9em;">
+                        <strong>📋 COLUMNAS OBLIGATORIAS (TODAS):</strong><br>
+                        • CODIGO_BARRAS<br>
+                        • CLAVE<br>
+                        • DESCRIPCION<br>
+                        • PRESENTACION<br>
+                        • GRAMAJE<br>
+                        • LOTE<br>
+                        • CADUCIDAD (formato AAAA-MM-DD o DD/MM/AAAA)
+                    </div>
+                    <input type="file" id="archivoExcel" accept=".xlsx,.xls" style="margin-bottom: 15px;">
+                    <button class="btn btn-primary" onclick="importarExcel()">📥 Importar Excel</button>
+                    <div id="resultadoImport" style="margin-top: 15px;"></div>
+                </div>
+                
+                <div class="card">
+                    <h3>Agregar Nuevo Medicamento Manual</h3>
+                    <div class="grid-3">
+                        <div class="form-group"><label>Código de Barras</label><input type="text" id="newCodigo" placeholder="CÓDIGO ÚNICO"></div>
+                        <div class="form-group"><label>Clave</label><input type="text" id="newClave" placeholder="CLAVE"></div>
+                        <div class="form-group"><label>Descripción</label><input type="text" id="newDesc" placeholder="NOMBRE"></div>
+                        <div class="form-group"><label>Presentación</label><input type="text" id="newPres" placeholder="TABLETAS, JARABE"></div>
+                        <div class="form-group"><label>Gramaje</label><input type="text" id="newGram" placeholder="500MG"></div>
+                        <div class="form-group"><label>Lote</label><input type="text" id="newLote" placeholder="LOTE"></div>
+                        <div class="form-group"><label>Caducidad</label><input type="date" id="newCaducidad"></div>
+                    </div>
+                    <button class="btn btn-success" onclick="agregarMedicamento()">+ Agregar Medicamento</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Listado de Medicamentos</h3>
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchMed" placeholder="BUSCAR POR CLAVE, DESCRIPCIÓN O CÓDIGO..." onkeyup="buscarMedicamento()">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label><input type="checkbox" id="mostrarInactivos" onchange="buscarMedicamento()"> Mostrar medicamentos inactivos</label>
+                    </div>
+                    <div id="listaMedicamentos"></div>
+                </div>
+            </div>
+            
+            <!-- REPORTES -->
+            <div id="reportes" class="tab-content">
+                <div class="stats-grid">
+                    <div class="stat-card"><h4>Total Entregas Hoy</h4><div class="value" id="statHoy">0</div></div>
+                    <div class="stat-card"><h4>Total Semana Actual</h4><div class="value" id="statSemana">0</div></div>
+                    <div class="stat-card"><h4>Total Mes Actual</h4><div class="value" id="statMes">0</div></div>
+                    <div class="stat-card"><h4>Medicamentos Activos</h4><div class="value" id="statMeds">0</div></div>
+                </div>
+
+                <div class="card">
+                    <h3>📄 Reportes de Entregas</h3>
+                    <button class="btn btn-success" onclick="imprimirEntregasDia()">🖨️ Reporte HOY</button>
+                    <button class="btn btn-success" onclick="imprimirEntregasSemana()">🖨️ Reporte SEMANAL</button>
+                    <button class="btn btn-success" onclick="imprimirEntregasMes()">🖨️ Reporte MENSUAL</button>
+                    <button class="btn btn-warning" onclick="mostrarModalFechas('entregas')">📅 Reporte por FECHAS</button>
+                </div>
+
+                <div class="card">
+                    <h3>📄 Reportes de NO Surtidos</h3>
+                    <button class="btn btn-danger" onclick="imprimirNoSurtidosDia()">🖨️ NO Surtidos HOY</button>
+                    <button class="btn btn-danger" onclick="imprimirNoSurtidosSemana()">🖨️ NO Surtidos SEMANA</button>
+                    <button class="btn btn-danger" onclick="imprimirNoSurtidosMes()">🖨️ NO Surtidos MES</button>
+                    <button class="btn btn-warning" onclick="mostrarModalFechas('nosurtidos')">📅 Reporte por FECHAS</button>
+                </div>
+                
+                <div class="card">
+                    <h3>Medicamentos Más Entregados</h3>
+                    <div id="topMedicamentos"></div>
+                </div>
+            </div>
+            
+            <!-- USUARIOS -->
+            <div id="usuarios" class="tab-content">
+                <div class="card">
+                    <h3>Gestión de Usuarios</h3>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Nuevo Usuario</label><input type="text" id="newUsuario" placeholder="NOMBRE DE USUARIO"></div>
+                        <div class="form-group"><label>Contraseña</label><input type="password" id="newPassword" placeholder="CONTRASEÑA"></div>
+                        <div class="form-group">
+                            <label>Rol</label>
+                            <select id="newRol">
+                                <option value="usuario">Usuario Normal</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-success" onclick="agregarUsuario()">+ Agregar Usuario</button>
+                    <h4 style="margin-top: 30px; color: #2d7c4e;">Usuarios Registrados</h4>
+                    <div id="listaUsuarios"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Búsqueda -->
+    <div id="modalBuscar" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: #2d7c4e;">Buscar Medicamento</h3>
+                <span class="close" onclick="cerrarModal('modalBuscar')">&times;</span>
+            </div>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchModal" placeholder="BUSCAR POR CLAVE, DESCRIPCIÓN O CÓDIGO..." onkeyup="buscarEnModal()">
+            </div>
+            <div id="resultadosBusqueda"></div>
+        </div>
+    </div>
+
+    <!-- Modal Fechas -->
+    <div id="modalFechas" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: #2d7c4e;">Seleccionar Rango de Fechas</h3>
+                <span class="close" onclick="cerrarModal('modalFechas')">&times;</span>
+            </div>
+            <input type="hidden" id="tipoReporte">
+            <div class="grid-2">
+                <div class="form-group"><label>Fecha Inicio</label><input type="date" id="rangoInicio"></div>
+                <div class="form-group"><label>Fecha Fin</label><input type="date" id="rangoFin"></div>
+            </div>
+            <button class="btn btn-primary" onclick="imprimirRango()">🖨️ Generar Reporte</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let medicamentos = [];
+        let entregas = [];
+        let noSurtidos = [];
+        let medSeleccionado = null;
+        let usuarios = [
+            {usuario: 'ADMIN', password: 'admin123', rol: 'admin'},
+            {usuario: 'FARMACIA', password: 'farmacia123', rol: 'usuario'}
+        ];
+        let usuarioActual = null;
+
+        // ============================================
+        // INICIALIZACIÓN DEL SISTEMA
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Sistema inicializado correctamente');
+            
+            // Configurar fechas
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha').value = hoy;
+            document.getElementById('rangoInicio').value = hoy;
+            document.getElementById('rangoFin').value = hoy;
+            document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-MX');
+            
+            // Event listeners
+            document.getElementById('codigo').addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+                buscarMedicamentoPorCodigo(e.target.value);
+            });
+            
+            document.getElementById('loginPass').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') iniciarSesion();
+            });
+            
+            // Cargar datos del localStorage
+            cargarDatos();
+        });
+
+        // ============================================
+        // PERSISTENCIA DE DATOS (localStorage)
+        // ============================================
+        function guardarDatos() {
+            try {
+                localStorage.setItem('farmacia_medicamentos', JSON.stringify(medicamentos));
+                localStorage.setItem('farmacia_entregas', JSON.stringify(entregas));
+                localStorage.setItem('farmacia_noSurtidos', JSON.stringify(noSurtidos));
+                localStorage.setItem('farmacia_usuarios', JSON.stringify(usuarios));
+                console.log('✅ Datos guardados correctamente');
+            } catch (error) {
+                console.error('❌ Error al guardar datos:', error);
+                alert('⚠️ Error al guardar datos');
+            }
+        }
+
+        function cargarDatos() {
+            try {
+                const meds = localStorage.getItem('farmacia_medicamentos');
+                const ents = localStorage.getItem('farmacia_entregas');
+                const noSurt = localStorage.getItem('farmacia_noSurtidos');
+                const usrs = localStorage.getItem('farmacia_usuarios');
+                
+                if (meds) medicamentos = JSON.parse(meds);
+                if (ents) entregas = JSON.parse(ents);
+                if (noSurt) noSurtidos = JSON.parse(noSurt);
+                if (usrs) usuarios = JSON.parse(usrs);
+                
+                console.log('✅ Datos cargados:', {
+                    medicamentos: medicamentos.length,
+                    entregas: entregas.length,
+                    noSurtidos: noSurtidos.length,
+                    usuarios: usuarios.length
+                });
+            } catch (error) {
+                console.error('❌ Error al cargar datos:', error);
+            }
+        }
+
+        // ============================================
+        // SISTEMA DE LOGIN Y SESIÓN
+        // ============================================
+        function iniciarSesion() {
+            const usuario = document.getElementById('loginUser').value.toUpperCase();
+            const password = document.getElementById('loginPass').value;
+            
+            console.log('🔐 Intentando login:', usuario);
+            
+            const user = usuarios.find(u => u.usuario === usuario && u.password === password);
+            
+            if (user) {
+                console.log('✅ Login exitoso:', user.usuario);
+                usuarioActual = user;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainSystem').style.display = 'block';
+                document.getElementById('usuarioActual').textContent = user.usuario;
+                
+                if (user.rol === 'admin') {
+                    document.querySelectorAll('.admin-panel').forEach(el => el.style.display = 'block');
+                }
+                
+                actualizarVistas();
+            } else {
+                console.log('❌ Login fallido');
+                document.getElementById('loginError').innerHTML = '<div class="alert alert-warning">❌ USUARIO O CONTRASEÑA INCORRECTOS</div>';
+            }
+        }
+
+        function cerrarSesion() {
+            if (confirm('¿ESTÁ SEGURO DE CERRAR SESIÓN?')) {
+                console.log('🚪 Cerrando sesión');
+                usuarioActual = null;
+                document.getElementById('mainSystem').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+                document.getElementById('loginError').innerHTML = '';
+                document.querySelectorAll('.admin-panel').forEach(el => el.style.display = 'none');
+            }
+            return false;
+        }
+
+        // ============================================
+        // SISTEMA DE TABS (CORREGIDO - event como parámetro)
+        // ============================================
+        function cambiarTab(evento, tabName) {
+            console.log('📑 Cambiando a tab:', tabName);
+            
+            if (tabName === 'usuarios' && (!usuarioActual || usuarioActual.rol !== 'admin')) {
+                alert('⚠️ NO TIENE PERMISOS PARA ACCEDER A ESTA SECCIÓN');
+                return;
+            }
+            
+            // Desactivar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Activar el tab seleccionado
+            document.getElementById(tabName).classList.add('active');
+            if (evento && evento.target) {
+                evento.target.classList.add('active');
+            }
+            
+            // Ejecutar acciones específicas por tab
+            if (tabName === 'reportes') actualizarEstadisticas();
+            if (tabName === 'bd') mostrarMedicamentos();
+            if (tabName === 'captura') mostrarEntregasRecientes();
+            if (tabName === 'usuarios') mostrarUsuarios();
+        }
+
+        // ============================================
+        // UTILIDADES GENERALES
+        // ============================================
+        function calcularColor(fechaCaducidad) {
+            if (!fechaCaducidad) return { color: 'AZUL', emoji: '🔵', texto: 'SIN CADUCIDAD', hex: '#00BFFF' };
+            
+            const hoy = new Date();
+            const caducidad = new Date(fechaCaducidad);
+            const diffTime = caducidad - hoy;
+            const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
+            
+            if (diffMonths > 12) return { color: 'VERDE', emoji: '🟢', texto: 'MÁS DE 12 MESES', hex: '#00FF00' };
+            if (diffMonths >= 6) return { color: 'AMARILLO', emoji: '🟡', texto: '6-12 MESES', hex: '#FFFF00' };
+            if (diffMonths >= 0) return { color: 'CAFE', emoji: '🟤', texto: 'MENOS DE 6 MESES', hex: '#8B4513' };
+            return { color: 'ROJO', emoji: '🔴', texto: 'CADUCADO', hex: '#FF0000' };
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function actualizarVistas() {
+            console.log('🔄 Actualizando vistas');
+            mostrarEntregasRecientes();
+            mostrarMedicamentos();
+            actualizarEstadisticas();
+        }
+
+        // ============================================
+        // MÓDULO DE CAPTURA
+        // ============================================
+        function buscarMedicamentoPorCodigo(codigo) {
+            if (codigo.length < 3) {
+                document.getElementById('medInfo').style.display = 'none';
+                medSeleccionado = null;
+                return;
+            }
+            const med = medicamentos.find(m => m.codigo === codigo && m.activo);
+            if (med) {
+                mostrarInfoMedicamento(med);
+            }
+        }
+
+        function mostrarInfoMedicamento(med) {
+            const colorInfo = calcularColor(med.caducidad);
+            document.getElementById('infoClave').textContent = med.clave;
+            document.getElementById('infoDesc').textContent = med.descripcion;
+            document.getElementById('infoPres').textContent = med.presentacion;
+            document.getElementById('infoGram').textContent = med.gramaje;
+            document.getElementById('infoLote').textContent = med.lote;
+            document.getElementById('infoCad').textContent = med.caducidad ? `${med.caducidad} ${colorInfo.emoji}` : 'SIN CADUCIDAD 🔵';
+            document.getElementById('medInfo').style.display = 'block';
+            medSeleccionado = med;
+        }
+
+        function buscarMedicamentoModal() {
+            document.getElementById('modalBuscar').style.display = 'block';
+            document.getElementById('searchModal').value = '';
+            buscarEnModal();
+        }
+
+        function buscarEnModal() {
+            const busqueda = document.getElementById('searchModal').value.toUpperCase();
+            const activos = medicamentos.filter(m => m.activo && (
+                m.descripcion.includes(busqueda) ||
+                m.clave.includes(busqueda) ||
+                m.codigo.includes(busqueda) ||
+                m.lote.includes(busqueda)
+            ));
+            
+            let html = '<table><tr><th>Clave</th><th>Descripción</th><th>Lote</th><th>Caducidad</th><th>Acción</th></tr>';
+            activos.forEach(m => {
+                const colorInfo = calcularColor(m.caducidad);
+                const medStr = JSON.stringify(m).replace(/"/g, '&quot;');
+                html += `<tr>
+                    <td>${m.clave}</td>
+                    <td>${m.descripcion}</td>
+                    <td>${m.lote}</td>
+                    <td>${colorInfo.emoji} ${m.caducidad || 'SIN CADUCIDAD'}</td>
+                    <td><button class="btn btn-primary" onclick='seleccionarMedicamento(${medStr})'>Seleccionar</button></td>
+                </tr>`;
+            });
+            html += '</table>';
+            document.getElementById('resultadosBusqueda').innerHTML = html;
+        }
+
+        function seleccionarMedicamento(med) {
+            document.getElementById('codigo').value = med.codigo;
+            mostrarInfoMedicamento(med);
+            cerrarModal('modalBuscar');
+        }
+
+        function registrarEntrega() {
+            const codigo = document.getElementById('codigo').value;
+            const fecha = document.getElementById('fecha').value;
+            
+            if (!codigo || !fecha) {
+                alert('⚠️ COMPLETE TODOS LOS CAMPOS');
+                return;
+            }
+            if (!medSeleccionado) {
+                alert('❌ MEDICAMENTO NO ENCONTRADO');
+                return;
+            }
+            
+            entregas.push({
+                codigo: medSeleccionado.codigo,
+                fecha: fecha,
+                clave: medSeleccionado.clave,
+                descripcion: medSeleccionado.descripcion,
+                presentacion: medSeleccionado.presentacion,
+                gramaje: medSeleccionado.gramaje,
+                lote: medSeleccionado.lote,
+                caducidad: medSeleccionado.caducidad,
+                timestamp: new Date().toISOString()
+            });
+            
+            guardarDatos();
+            alert('✅ ENTREGA REGISTRADA');
+            limpiarFormulario();
+            mostrarEntregasRecientes();
+        }
+
+        function registrarNoSurtido() {
+            const codigo = document.getElementById('codigo').value;
+            const fecha = document.getElementById('fecha').value;
+            
+            if (!codigo || !fecha) {
+                alert('⚠️ COMPLETE TODOS LOS CAMPOS');
+                return;
+            }
+            if (!medSeleccionado) {
+                alert('❌ MEDICAMENTO NO ENCONTRADO');
+                return;
+            }
+            
+            noSurtidos.push({
+                codigo: medSeleccionado.codigo,
+                fecha: fecha,
+                clave: medSeleccionado.clave,
+                descripcion: medSeleccionado.descripcion,
+                presentacion: medSeleccionado.presentacion,
+                gramaje: medSeleccionado.gramaje,
+                lote: medSeleccionado.lote,
+                caducidad: medSeleccionado.caducidad,
+                timestamp: new Date().toISOString()
+            });
+            
+            guardarDatos();
+            alert('✅ NO SURTIDO REGISTRADO');
+            limpiarFormulario();
+            mostrarEntregasRecientes();
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('codigo').value = '';
+            document.getElementById('medInfo').style.display = 'none';
+            medSeleccionado = null;
+            document.getElementById('codigo').focus();
+        }
+
+        function mostrarEntregasRecientes() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const delDia = entregas.filter(e => e.fecha === hoy);
+            const noSurtidosDelDia = noSurtidos.filter(n => n.fecha === hoy);
+            
+            let html = '<h4>Entregas: ' + delDia.length + ' | NO Surtidos: ' + noSurtidosDelDia.length + '</h4>';
+            html += '<table><tr><th>Tipo</th><th>Hora</th><th>Clave</th><th>Descripción</th><th>Lote</th><th>Caducidad</th></tr>';
+            
+            [...delDia.map(e => ({...e, tipo: 'ENTREGA'})), ...noSurtidosDelDia.map(n => ({...n, tipo: 'NO SURTIDO'}))]
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .forEach(item => {
+                    const colorInfo = calcularColor(item.caducidad);
+                    const tipoClass = item.tipo === 'ENTREGA' ? '' : 'style="background: #fff3cd;"';
+                    html += `<tr ${tipoClass}>
+                        <td><strong>${item.tipo}</strong></td>
+                        <td>${new Date(item.timestamp).toLocaleTimeString('es-MX')}</td>
+                        <td>${item.clave}</td>
+                        <td>${item.descripcion}</td>
+                        <td>${item.lote}</td>
+                        <td>${colorInfo.emoji} ${item.caducidad || 'SIN CADUCIDAD'}</td>
+                    </tr>`;
+                });
+            html += '</table>';
+            document.getElementById('entregasRecientes').innerHTML = html;
+        }
+
+        // ============================================
+        // MÓDULO DE MEDICAMENTOS
+        // ============================================
+        function importarExcel() {
+            const archivo = document.getElementById('archivoExcel').files[0];
+            if (!archivo) {
+                alert('⚠️ SELECCIONE UN ARCHIVO EXCEL');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                    
+                    let errores = [];
+                    let importados = 0;
+                    
+                    jsonData.forEach((row, index) => {
+                        const fila = index + 2;
+                        const camposFaltantes = [];
+                        
+                        // Validar TODAS las columnas obligatorias
+                        if (!row['CODIGO_BARRAS'] && !row['codigo_barras']) camposFaltantes.push('CODIGO_BARRAS');
+                        if (!row['CLAVE'] && !row['clave']) camposFaltantes.push('CLAVE');
+                        if (!row['DESCRIPCION'] && !row['descripcion']) camposFaltantes.push('DESCRIPCION');
+                        if (!row['PRESENTACION'] && !row['presentacion']) camposFaltantes.push('PRESENTACION');
+                        if (!row['GRAMAJE'] && !row['gramaje']) camposFaltantes.push('GRAMAJE');
+                        if (!row['LOTE'] && !row['lote']) camposFaltantes.push('LOTE');
+                        if (!row['CADUCIDAD'] && !row['caducidad']) camposFaltantes.push('CADUCIDAD');
+                        
+                        if (camposFaltantes.length > 0) {
+                            errores.push(`<div class="error-item">Fila ${fila}: Faltan campos → <strong>${camposFaltantes.join(', ')}</strong></div>`);
+                        } else {
+                            let caducidad = row['CADUCIDAD'] || row['caducidad'] || '';
+                            if (caducidad) {
+                                caducidad = convertirFechaExcel(caducidad);
+                            }
+                            
+                            medicamentos.push({
+                                codigo: (row['CODIGO_BARRAS'] || row['codigo_barras']).toString().trim().toUpperCase(),
+                                clave: (row['CLAVE'] || row['clave']).toString().trim().toUpperCase(),
+                                descripcion: (row['DESCRIPCION'] || row['descripcion']).toString().trim().toUpperCase(),
+                                presentacion: (row['PRESENTACION'] || row['presentacion']).toString().trim().toUpperCase(),
+                                gramaje: (row['GRAMAJE'] || row['gramaje']).toString().trim().toUpperCase(),
+                                lote: (row['LOTE'] || row['lote']).toString().trim().toUpperCase(),
+                                caducidad: caducidad,
+                                activo: true
+                            });
+                            importados++;
+                        }
+                    });
+                    
+                    if (errores.length > 0) {
+                        document.getElementById('resultadoImport').innerHTML = `
+                            <div class="alert alert-danger">
+                                <strong>❌ ERRORES EN LA IMPORTACIÓN</strong><br>
+                                Se encontraron <strong>${errores.length}</strong> filas con campos incompletos.<br>
+                                Solo se importaron <strong>${importados}</strong> filas completas.<br><br>
+                                <strong>TODAS LAS COLUMNAS SON OBLIGATORIAS:</strong>
+                                <div class="error-list">${errores.join('')}</div>
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('resultadoImport').innerHTML = `
+                            <div class="alert alert-success">
+                                <strong>✅ IMPORTACIÓN EXITOSA</strong><br>
+                                ${importados} medicamentos importados correctamente.
+                            </div>
+                        `;
+                    }
+                    
+                    if (importados > 0) {
+                        guardarDatos();
+                        mostrarMedicamentos();
+                    }
+                    
+                } catch (error) {
+                    document.getElementById('resultadoImport').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>❌ ERROR AL PROCESAR EL ARCHIVO</strong><br>
+                            ${error.message}
+                        </div>
+                    `;
+                }
+            };
+            reader.readAsArrayBuffer(archivo);
+        }
+
+        function convertirFechaExcel(fecha) {
+            if (typeof fecha === 'number') {
+                const date = new Date((fecha - 25569) * 86400 * 1000);
+                return date.toISOString().split('T')[0];
+            }
+            
+            if (typeof fecha === 'string') {
+                if (fecha.includes('/')) {
+                    const parts = fecha.split('/');
+                    if (parts.length === 3) {
+                        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                }
+                if (fecha.includes('-') && fecha.length === 10) {
+                    return fecha;
+                }
+            }
+            
+            return fecha;
+        }
+
+        function agregarMedicamento() {
+            const codigo = document.getElementById('newCodigo').value;
+            const clave = document.getElementById('newClave').value;
+            const desc = document.getElementById('newDesc').value;
+            const pres = document.getElementById('newPres').value;
+            const gram = document.getElementById('newGram').value;
+            const lote = document.getElementById('newLote').value;
+            const caducidad = document.getElementById('newCaducidad').value;
+            
+            if (!codigo || !clave || !desc || !pres || !gram || !lote || !caducidad) {
+                alert('⚠️ COMPLETE TODOS LOS CAMPOS OBLIGATORIOS');
+                return;
+            }
+            
+            medicamentos.push({
+                codigo, clave, descripcion: desc, presentacion: pres,
+                gramaje: gram, lote, caducidad, activo: true
+            });
+            
+            guardarDatos();
+            alert('✅ MEDICAMENTO AGREGADO');
+            ['newCodigo','newClave','newDesc','newPres','newGram','newLote','newCaducidad'].forEach(id => 
+                document.getElementById(id).value = '');
+            mostrarMedicamentos();
+        }
+
+        function mostrarMedicamentos() {
+            const mostrarInactivos = document.getElementById('mostrarInactivos').checked;
+            const lista = mostrarInactivos ? medicamentos : medicamentos.filter(m => m.activo);
+            const busqueda = document.getElementById('searchMed').value.toUpperCase();
+            const filtrados = lista.filter(m => 
+                m.descripcion.includes(busqueda) || m.clave.includes(busqueda) || 
+                m.codigo.includes(busqueda) || m.lote.includes(busqueda)
+            );
+            
+            let html = '<table><tr><th>Código</th><th>Clave</th><th>Descripción</th><th>Lote</th><th>Caducidad</th><th>Estado</th></tr>';
+            filtrados.forEach((m) => {
+                const colorInfo = calcularColor(m.caducidad);
+                const claseInactivo = m.activo ? '' : ' class="inactive"';
+                html += `<tr${claseInactivo}>
+                    <td>${m.codigo}</td>
+                    <td>${m.clave}</td>
+                    <td>${m.descripcion}</td>
+                    <td>${m.lote}</td>
+                    <td>${colorInfo.emoji} ${m.caducidad || 'SIN CADUCIDAD'}</td>
+                    <td>${colorInfo.texto}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            document.getElementById('listaMedicamentos').innerHTML = html;
+        }
+
+        function buscarMedicamento() {
+            mostrarMedicamentos();
+        }
+
+        // ============================================
+        // MÓDULO DE REPORTES
+        // ============================================
+        function actualizarEstadisticas() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const entregasHoy = entregas.filter(e => e.fecha === hoy).length;
+            
+            const inicioSemana = new Date();
+            inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay());
+            const entregasSemana = entregas.filter(e => new Date(e.fecha) >= inicioSemana).length;
+            
+            const inicioMes = new Date();
+            inicioMes.setDate(1);
+            const entregasMes = entregas.filter(e => new Date(e.fecha) >= inicioMes).length;
+            
+            document.getElementById('statHoy').textContent = entregasHoy;
+            document.getElementById('statSemana').textContent = entregasSemana;
+            document.getElementById('statMes').textContent = entregasMes;
+            document.getElementById('statMeds').textContent = medicamentos.filter(m => m.activo).length;
+            
+            mostrarTopMedicamentos();
+        }
+
+        function mostrarTopMedicamentos() {
+            const conteo = {};
+            entregas.forEach(e => conteo[e.descripcion] = (conteo[e.descripcion] || 0) + 1);
+            const top = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            let html = '<table><tr><th>Medicamento</th><th>Cantidad</th></tr>';
+            top.forEach(([med, cant]) => html += `<tr><td>${med}</td><td><strong>${cant}</strong></td></tr>`);
+            html += '</table>';
+            document.getElementById('topMedicamentos').innerHTML = html || '<p>NO HAY DATOS</p>';
+        }
+
+        function imprimirEntregasDia() {
+            const hoy = new Date().toISOString().split('T')[0];
+            imprimirReporteEntregas(hoy, hoy, 'DEL DÍA');
+        }
+
+        function imprimirEntregasSemana() {
+            const hoy = new Date();
+            const inicio = new Date(hoy);
+            inicio.setDate(hoy.getDate() - hoy.getDay());
+            const fin = new Date(inicio);
+            fin.setDate(inicio.getDate() + 6);
+            imprimirReporteEntregas(inicio.toISOString().split('T')[0], fin.toISOString().split('T')[0], 'SEMANAL');
+        }
+
+        function imprimirEntregasMes() {
+            const hoy = new Date();
+            const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+            imprimirReporteEntregas(inicio.toISOString().split('T')[0], fin.toISOString().split('T')[0], 'MENSUAL');
+        }
+
+        function imprimirNoSurtidosDia() {
+            const hoy = new Date().toISOString().split('T')[0];
+            imprimirReporteNoSurtidos(hoy, hoy, 'DEL DÍA');
+        }
+
+        function imprimirNoSurtidosSemana() {
+            const hoy = new Date();
+            const inicio = new Date(hoy);
+            inicio.setDate(hoy.getDate() - hoy.getDay());
+            const fin = new Date(inicio);
+            fin.setDate(inicio.getDate() + 6);
+            imprimirReporteNoSurtidos(inicio.toISOString().split('T')[0], fin.toISOString().split('T')[0], 'SEMANAL');
+        }
+
+        function imprimirNoSurtidosMes() {
+            const hoy = new Date();
+            const inicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+            imprimirReporteNoSurtidos(inicio.toISOString().split('T')[0], fin.toISOString().split('T')[0], 'MENSUAL');
+        }
+
+        function mostrarModalFechas(tipo) {
+            document.getElementById('tipoReporte').value = tipo;
+            document.getElementById('modalFechas').style.display = 'block';
+        }
+
+        function imprimirRango() {
+            const tipo = document.getElementById('tipoReporte').value;
+            const inicio = document.getElementById('rangoInicio').value;
+            const fin = document.getElementById('rangoFin').value;
+            
+            if (!inicio || !fin) {
+                alert('⚠️ SELECCIONE AMBAS FECHAS');
+                return;
+            }
+            
+            cerrarModal('modalFechas');
+            
+            if (tipo === 'entregas') {
+                imprimirReporteEntregas(inicio, fin, `DEL ${inicio} AL ${fin}`);
+            } else {
+                imprimirReporteNoSurtidos(inicio, fin, `DEL ${inicio} AL ${fin}`);
+            }
+        }
+
+        function imprimirReporteEntregas(inicio, fin, titulo) {
+            const filtradas = entregas.filter(e => e.fecha >= inicio && e.fecha <= fin);
+            
+            const porFecha = {};
+            filtradas.forEach(e => {
+                if (!porFecha[e.fecha]) porFecha[e.fecha] = [];
+                porFecha[e.fecha].push(e);
+            });
+            
+            let html = `
+                <html>
+                <head>
+                    <title>Reporte de Entregas ${titulo}</title>
+                    <style>
+                        body { font-family: Arial; padding: 20px; }
+                        h1 { color: #2d7c4e; text-align: center; }
+                        h2 { color: #2d7c4e; margin-top: 30px; border-bottom: 2px solid #2d7c4e; padding-bottom: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #333; padding: 8px; text-align: left; font-size: 12px; }
+                        th { background: #2d7c4e; color: white; }
+                        .total { background: #f8f9fa; font-weight: bold; }
+                        .resumen { background: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Reporte de Entregas ${titulo}</h1>
+                    <div class="resumen">
+                        <strong>PERÍODO:</strong> ${inicio} al ${fin}<br>
+                        <strong>TOTAL DE ENTREGAS:</strong> ${filtradas.length}<br>
+                        <strong>FECHA DE GENERACIÓN:</strong> ${new Date().toLocaleString('es-MX')}
+                    </div>
+            `;
+            
+            Object.keys(porFecha).sort().forEach(fecha => {
+                const entregas = porFecha[fecha];
+                html += `
+                    <h2>Fecha: ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h2>
+                    <table>
+                        <tr><th>Código</th><th>Clave</th><th>Descripción</th><th>Presentación</th><th>Gramaje</th><th>Lote</th><th>Caducidad</th></tr>
+                `;
+                
+                entregas.forEach(e => {
+                    html += `<tr><td>${e.codigo}</td><td>${e.clave}</td><td>${e.descripcion}</td><td>${e.presentacion}</td><td>${e.gramaje}</td><td>${e.lote}</td><td>${e.caducidad || 'S/C'}</td></tr>`;
+                });
+                
+                html += `<tr class="total"><td colspan="7">TOTAL DEL DÍA: ${entregas.length} entregas</td></tr></table>`;
+            });
+            
+            html += `</body></html>`;
+            
+            const ventana = window.open('', '_blank');
+            ventana.document.write(html);
+            ventana.document.close();
+            ventana.print();
+        }
+
+        function imprimirReporteNoSurtidos(inicio, fin, titulo) {
+            const filtradas = noSurtidos.filter(n => n.fecha >= inicio && n.fecha <= fin);
+            
+            const conteo = {};
+            filtradas.forEach(n => {
+                const key = `${n.clave} - ${n.descripcion}`;
+                conteo[key] = (conteo[key] || 0) + 1;
+            });
+            const top10 = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 10);
+            
+            const porFecha = {};
+            filtradas.forEach(n => {
+                if (!porFecha[n.fecha]) porFecha[n.fecha] = [];
+                porFecha[n.fecha].push(n);
+            });
+            
+            let html = `
+                <html>
+                <head>
+                    <title>Reporte de NO Surtidos ${titulo}</title>
+                    <style>
+                        body { font-family: Arial; padding: 20px; }
+                        h1 { color: #dc3545; text-align: center; }
+                        h2 { color: #dc3545; margin-top: 30px; border-bottom: 2px solid #dc3545; padding-bottom: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #333; padding: 8px; text-align: left; font-size: 12px; }
+                        th { background: #dc3545; color: white; }
+                        .total { background: #f8d7da; font-weight: bold; }
+                        .resumen { background: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                        .top10 { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Reporte de NO Surtidos ${titulo}</h1>
+                    <div class="resumen">
+                        <strong>PERÍODO:</strong> ${inicio} al ${fin}<br>
+                        <strong>TOTAL DE NO SURTIDOS:</strong> ${filtradas.length}<br>
+                        <strong>FECHA DE GENERACIÓN:</strong> ${new Date().toLocaleString('es-MX')}
+                    </div>
+            `;
+            
+            if (top10.length > 0) {
+                html += `
+                    <div class="top10">
+                        <h2>TOP 10 - Medicamentos Más Solicitados (NO Surtidos)</h2>
+                        <table><tr><th>#</th><th>Medicamento</th><th>Veces NO Surtido</th></tr>
+                `;
+                top10.forEach(([med, cant], idx) => {
+                    html += `<tr><td>${idx + 1}</td><td>${med}</td><td><strong>${cant}</strong></td></tr>`;
+                });
+                html += `</table></div>`;
+            }
+            
+            Object.keys(porFecha).sort().forEach(fecha => {
+                const items = porFecha[fecha];
+                html += `
+                    <h2>Fecha: ${new Date(fecha + 'T00:00:00').toLocaleDateString('es-MX', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</h2>
+                    <table>
+                        <tr><th>Código</th><th>Clave</th><th>Descripción</th><th>Presentación</th><th>Gramaje</th><th>Lote</th><th>Caducidad</th></tr>
+                `;
+                
+                items.forEach(n => {
+                    html += `<tr><td>${n.codigo}</td><td>${n.clave}</td><td>${n.descripcion}</td><td>${n.presentacion}</td><td>${n.gramaje}</td><td>${n.lote}</td><td>${n.caducidad || 'S/C'}</td></tr>`;
+                });
+                
+                html += `<tr class="total"><td colspan="7">TOTAL DEL DÍA: ${items.length} NO surtidos</td></tr></table>`;
+            });
+            
+            html += `</body></html>`;
+            
+            const ventana = window.open('', '_blank');
+            ventana.document.write(html);
+            ventana.document.close();
+            ventana.print();
+        }
+
+        // ============================================
+        // MÓDULO DE USUARIOS
+        // ============================================
+        function agregarUsuario() {
+            const usuario = document.getElementById('newUsuario').value.toUpperCase();
+            const password = document.getElementById('newPassword').value;
+            const rol = document.getElementById('newRol').value;
+            
+            if (!usuario || !password) {
+                alert('⚠️ COMPLETE TODOS LOS CAMPOS');
+                return;
+            }
+            
+            if (usuarios.find(u => u.usuario === usuario)) {
+                alert('❌ EL USUARIO YA EXISTE');
+                return;
+            }
+            
+            usuarios.push({usuario, password, rol});
+            guardarDatos();
+            alert('✅ USUARIO AGREGADO');
+            document.getElementById('newUsuario').value = '';
+            document.getElementById('newPassword').value = '';
+            mostrarUsuarios();
+        }
+
+        function eliminarUsuario(usuario) {
+            if (usuario === 'ADMIN') {
+                alert('❌ NO SE PUEDE ELIMINAR EL USUARIO ADMIN');
+                return;
+            }
+            if (confirm('¿ESTÁ SEGURO DE ELIMINAR ESTE USUARIO?')) {
+                usuarios = usuarios.filter(u => u.usuario !== usuario);
+                guardarDatos();
+                alert('✅ USUARIO ELIMINADO');
+                mostrarUsuarios();
+            }
+        }
+
+        function mostrarUsuarios() {
+            let html = '<table><tr><th>Usuario</th><th>Rol</th><th>Acciones</th></tr>';
+            usuarios.forEach(u => {
+                html += `<tr>
+                    <td>${u.usuario}</td>
+                    <td>${u.rol === 'admin' ? '👑 Administrador' : '👤 Usuario'}</td>
+                    <td>
+                        ${u.usuario !== 'ADMIN' ? 
+                            `<button class="btn btn-danger" onclick="eliminarUsuario('${u.usuario}')">❌ Eliminar</button>` : 
+                            '<em>Protegido</em>'}
+                    </td>
+                </tr>`;
+            });
+            html += '</table>';
+            document.getElementById('listaUsuarios').innerHTML = html;
+        }
+
+        // ============================================
+        // EVENT LISTENERS PARA MODALES
+        // ============================================
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // LOGS DE DEPURACIÓN
+        // ============================================
+        console.log('✅ Sistema completamente inicializado');
+        console.log('📋 Funciones disponibles:', {
+            login: 'iniciarSesion()',
+            captura: 'registrarEntrega(), registrarNoSurtido()',
+            medicamentos: 'importarExcel(), agregarMedicamento()',
+            reportes: 'imprimirEntregasDia(), imprimirNoSurtidosDia()',
+            usuarios: 'agregarUsuario(), eliminarUsuario()',
+            persistencia: 'guardarDatos(), cargarDatos()'
+        });
+    </script>
+</body>
+</html>
